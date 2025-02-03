@@ -58,7 +58,7 @@ func (r *Resp) readInteger() (x int, n int, err error) {
   return int(i64), n, nil
 }
 
-func (r *Resp) read() (Value, error) {
+func (r *Resp) Read() (Value, error) {
   _type, err := r.reader.ReadByte()
   if err != nil {
     return Value{}, err
@@ -73,4 +73,48 @@ func (r *Resp) read() (Value, error) {
     fmt.Printf("Unknown Type: %v", string(_type))
     return Value{}, nil
   }
+}
+
+func (r *Resp) readArray() (Value, error) {
+  v := Value{}
+  v.typ = "array"
+
+  // reads the length of the arr
+  length, _, err := r.readInteger()
+  if err != nil {
+    return v, err
+  }
+
+  v.array = make([]Value, length)
+  for i:= 0; i < length; i++ {
+    val, err := r.Read()
+    if err != nil {
+      return v, err
+    }
+
+    v.array[i] = val
+  }
+
+  return v, nil
+}
+
+
+func (r *Resp) readBulk() (Value, error) {
+  v := Value{}
+  v.typ = "bulk"
+
+  len, _, err := r.readInteger()
+  if err != nil {
+    return v, err
+  }
+
+  bulk := make([]byte, len)
+
+  r.reader.Read(bulk)
+
+  v.bulk = string(bulk)
+
+  r.readLine()
+
+  return v, nil
 }
