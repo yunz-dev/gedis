@@ -7,9 +7,10 @@ var Handlers = map[string]func([]Value) Value {
   "SET": set,
   "DEL": del,
   "GET": get,
-  "HSET": hget,
+  "HSET": hset,
   "HGET": hget,
   "HDEL": hdel,
+  "HGETALL": hgetall,
 }
 
 
@@ -148,4 +149,28 @@ func hget(args []Value) Value {
   }
 
   return Value{typ: "bulk", bulk: value}
+}
+
+func hgetall(args []Value) Value {
+  if len(args) != 1 {
+    return Value{typ: "error", str: "ERR wrong number of arguments for HGETALL command"}
+  }
+
+  hash := args[0].bulk
+
+  HSETsMu.RLock()
+  fields, exists := HSETs[hash]
+  HSETsMu.RUnlock()
+
+  if !exists {
+    return Value{typ: "array", array: []Value{}}
+  }
+
+  result := make([]Value, 0, len(fields)*2)
+  for key, value := range fields {
+    result = append(result, Value{typ: "string", str: key})
+    result = append(result, Value{typ: "string", str: value})
+  }
+
+  return Value{typ: "array", array: result}
 }
