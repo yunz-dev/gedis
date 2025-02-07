@@ -48,17 +48,17 @@ func del(args []Value) Value {
 
     // Lock both maps at the same time to ensure atomicity
     SETsMu.Lock()
+    HSETsMu.Lock()
     if _, exists := SETs[key]; exists {
         delete(SETs, key)
         deletedCount++
     }
-    SETsMu.Unlock()
 
-    HSETsMu.Lock()
     if _, exists := HSETs[key]; exists {
         delete(HSETs, key)
         deletedCount++
     }
+    SETsMu.Unlock()
     HSETsMu.Unlock()
 
     return Value{typ: "integer", num: deletedCount}
