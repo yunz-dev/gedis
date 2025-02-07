@@ -1,15 +1,19 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"strings"
 )
 
 func main() {
-  fmt.Println("Listening on port :6379")
+  Addr := ""
+  flag.StringVar(&Addr, "addr", ":6397", "HTTP network address")
+  flag.Parse()
+  fmt.Println("Listening on port", Addr)
   // start TCP Listen
-  l, err := net.Listen("tcp", ":6379")
+  l, err := net.Listen("tcp", Addr)
   if err != nil {
     fmt.Println(err)
     return
