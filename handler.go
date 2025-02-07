@@ -1,6 +1,8 @@
 package main
 
-import "sync"
+import (
+	"sync"
+)
 
 var Handlers = map[string]func([]Value) Value {
   "PING": ping,
@@ -121,7 +123,7 @@ func hdel(args []Value) Value {
         deletedCount++
       }
     }
-    // If the hash is now empty, remove it entirely (optional but aligns with Redis behavior)
+    // If the hash is now empty, remove it entirely
     if len(fields) == 0 {
       delete(HSETs, hash)
     }
