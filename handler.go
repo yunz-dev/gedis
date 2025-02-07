@@ -5,10 +5,13 @@ import "sync"
 var Handlers = map[string]func([]Value) Value {
   "PING": ping,
   "SET": set,
+  "DEL": del,
   "GET": get,
   "HSET": hget,
   "HGET": hget,
+  "HDEL": hdel,
 }
+
 
 func ping(args []Value) Value {
   if len(args) == 0 {
@@ -34,6 +37,30 @@ func set(args []Value) Value {
 
   return Value{typ: "string", str: "OK"}
 }
+
+
+func del(args []Value) Value {
+    key := args[0].bulk
+    deletedCount := 0
+
+    // Lock both maps at the same time to ensure atomicity
+    SETsMu.Lock()
+    if _, exists := SETs[key]; exists {
+        delete(SETs, key)
+        deletedCount++
+    }
+    SETsMu.Unlock()
+
+    HSETsMu.Lock()
+    if _, exists := HSETs[key]; exists {
+        delete(HSETs, key)
+        deletedCount++
+    }
+    HSETsMu.Unlock()
+
+    return Value{typ: "integer", num: deletedCount}
+}
+
 
 
 func get(args []Value) Value {
@@ -75,6 +102,34 @@ func hset(args []Value) Value {
 
   return Value{typ: "string", str: "OK"}
 }
+
+func hdel(args []Value) Value {
+  if len(args) < 2 {
+    return Value{typ: "error", str: "ERR wrong number of arguments for HDEL command"}
+  }
+
+  hash := args[0].bulk
+  keys := args[1:] // Remaining arguments are field keys to delete
+  deletedCount := 0
+
+  HSETsMu.Lock()
+  if fields, exists := HSETs[hash]; exists {
+    for _, key := range keys {
+      if _, found := fields[key.bulk]; found {
+        delete(fields, key.bulk)
+        deletedCount++
+      }
+    }
+    // If the hash is now empty, remove it entirely (optional but aligns with Redis behavior)
+    if len(fields) == 0 {
+      delete(HSETs, hash)
+    }
+  }
+  HSETsMu.Unlock()
+
+  return Value{typ: "integer", num: deletedCount}
+}
+
 
 func hget(args []Value) Value {
   if len(args) != 2 {
