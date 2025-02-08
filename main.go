@@ -8,12 +8,13 @@ import (
 )
 
 func main() {
-  Addr := ""
-  flag.StringVar(&Addr, "addr", ":6397", "HTTP network address")
+  var Addr string
+  flag.StringVar(&Addr, "addr", ":6379", "HTTP network address")
   flag.Parse()
-  fmt.Println("Listening on port", Addr)
+  fmt.Println("Listening on", Addr)
   // start TCP Listen
   l, err := net.Listen("tcp", Addr)
+  // l, err := net.Listen("tcp", ":6379")
   if err != nil {
     fmt.Println(err)
     return
